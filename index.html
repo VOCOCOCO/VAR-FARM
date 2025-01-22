@@ -42,14 +42,18 @@
         #grid-container {
             display: flex;
             justify-content: center;
+            align-items: center;
             margin: 20px;
         }
+        
         #grid {
             display: grid;
-            grid-template-columns: repeat(5, 100px);
-            grid-template-rows: repeat(5, 100px);
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             gap: 5px;
+            max-width: 100%;
+            justify-items: center;
         }
+        
         .cell {
             width: 100px;
             height: 100px;
@@ -235,12 +239,25 @@
     }
 
     // Создаем сетку
-    for (let i = 0; i < 25; i++) {
+function createGrid() {
+    const gridSize = Math.floor(window.innerWidth / 100) * Math.floor(window.innerHeight / 100);
+    grid.innerHTML = '';
+    for (let i = 0; i < gridSize; i++) {
         const cell = document.createElement('div');
         cell.classList.add('cell');
         cell.addEventListener('click', () => openPopup(cell));
         grid.appendChild(cell);
     }
+}
+
+// Вызов функции создания сетки при загрузке и изменении размера окна
+window.addEventListener('load', createGrid);
+window.addEventListener('resize', createGrid);
+
+// Восстановление состояния при загрузке
+restoreGenerators();
+updateResources();
+
 
     // Восстановление генераторов после перезагрузки
     function restoreGenerators() {
