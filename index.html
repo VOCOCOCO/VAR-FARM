@@ -216,11 +216,11 @@
 
     <div id="popup">
         <p>Выберите генератор:</p>
-        <button onclick="confirmPurchase('gold')">Золото   (100 монет)</button>
-        <button onclick="confirmPurchase('diamond')">Алмазы   (200 монет)</button>
-        <button onclick="confirmPurchase('silver')">Серебро (150 монет)</button>
-        <button onclick="confirmPurchase('emerald')">Диаманты (300 монет)</button>
-        <button onclick="confirmPurchase('coal')">Уголь    (50 монет)</button>
+        <button onclick="confirmPurchase('gold')">Золото   (800 монет)</button>
+        <button onclick="confirmPurchase('diamond')">Алмазы   (2100 монет)</button>
+        <button onclick="confirmPurchase('silver')">Серебро (500 монет)</button>
+        <button onclick="confirmPurchase('emerald')">Диаманты (3200 монет)</button>
+        <button onclick="confirmPurchase('coal')">Уголь    (200 монет)</button>
     </div>
 
     <script>
@@ -326,7 +326,7 @@
 
         // Продажа ресурсов
         function sellResource(type) {
-            const prices = { gold: 7, diamond: 15, silver: 5, emerald: 25, coal: 2 };
+            const prices = { gold: 10, diamond: 25, silver: 7, emerald: 35, coal: 4 };
             if (resources[type] > 0) {
                 resources.coins += prices[type];
                 resources[type] -= 1;
@@ -344,7 +344,7 @@
                 document.getElementById(generator.type).textContent = resources[generator.type];
             });
             saveGame();
-        }, 5000); // Каждую секунду
+        }, 1000); // Каждую секунду
 
         // Сохранение состояния игры
         function saveGame() {
