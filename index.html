@@ -148,10 +148,43 @@
             background-color: #555;
             color: #fff;
             border: none;
-            padding: 5px 10px;cursor: pointer;
+            padding: 5px 10px;
+            cursor: pointer;
         }
 
         .sell-button:hover {
+            background-color: #777;
+        }
+
+        /* Добавленные стили для вкладки ставок */
+        #betting-tab {
+            text-align: center;
+        }
+
+        .betting-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .betting-container input {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        .betting-container button {
+            background-color: #555;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .betting-container button:hover {
             background-color: #777;
         }
     </style>
@@ -161,6 +194,7 @@
     <nav>
         <a href="#" onclick="showTab('grid-tab')">Сетка</a>
         <a href="#" onclick="showTab('resources-tab')">Ресурсы</a>
+        <a href="#" onclick="showTab('betting-tab')">Ставки</a> <!-- Новая вкладка Ставки -->
     </nav>
 
     <div id="grid-tab" class="tab active">
@@ -214,6 +248,15 @@
         </table>
     </div>
 
+    <div id="betting-tab" class="tab">
+        <h2 style="text-align: center;">Ставки</h2>
+        <div class="betting-container">
+            <input type="number" id="bet-amount" placeholder="Введите сумму ставки">
+            <button onclick="placeBet()">Сделать ставку</button>
+            <p id="bet-result"></p>
+        </div>
+    </div>
+
     <div id="popup">
         <p>Выберите генератор:</p>
         <button onclick="confirmPurchase('gold')">Золото   (800 монет)</button>
@@ -228,7 +271,7 @@
         const resources = JSON.parse(localStorage.getItem('resources')) || { coins: 500, gold: 0, diamond: 0, silver: 0, emerald: 0, coal: 0 };
         let selectedCell = null;
         let generators = JSON.parse(localStorage.getItem('generators')) || [];
-
+    
         // Отображаем ресурсы
         function updateResources() {
             document.getElementById('coins').textContent = resources.coins;
@@ -238,7 +281,7 @@
             document.getElementById('emerald').textContent = resources.emerald;
             document.getElementById('coal').textContent = resources.coal;
         }
-
+    
         // Создаем сетку
         function createGrid() {
             grid.innerHTML = '';
@@ -249,15 +292,15 @@
                 grid.appendChild(cell);
             }
         }
-
+    
         // Вызов функции создания сетки при загрузке и изменении размера окна
-        window.addEventListener('load', createGrid);
+        window.addEventListener('load', () => {
+            createGrid();
+            restoreGenerators();
+            updateResources();
+        });
         window.addEventListener('resize', createGrid);
-
-        // Восстановление состояния при загрузке
-        restoreGenerators();
-        updateResources();
-
+    
         // Восстановление генераторов после перезагрузки
         function restoreGenerators() {
             generators.forEach(generator => {
@@ -266,7 +309,7 @@
                     const genDiv = document.createElement('div');
                     genDiv.classList.add('generator', generator.type);
                     cell.appendChild(genDiv);
-
+    
                     // Установка времени жизни генератора
                     setTimeout(() => {
                         cell.innerHTML = '';  // Удаление генератора после 40 часов
@@ -276,24 +319,24 @@
                 }
             });
         }
-
+    
         // Переключение вкладок
         function showTab(tabId) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
         }
-
+    
         // Открыть popup
         function openPopup(cell) {
             selectedCell = cell;
             document.getElementById('popup').style.display = 'block';
         }
-
+    
         // Закрыть popup
         function closePopup() {
             document.getElementById('popup').style.display = 'none';
         }
-
+    
         // Подтверждение покупки
         function confirmPurchase(type) {
             const prices = { gold: 800, diamond: 2100, silver: 500, emerald: 3200, coal: 200 };
@@ -307,7 +350,7 @@
                 alert('Недостаточно монет для покупки этого генератора!');
             }
         }
-
+    
         // Установить генератор
         function placeGenerator(type) {
             if (selectedCell) {
@@ -323,20 +366,21 @@
                 }
             }
         }
-
+    
         // Продажа ресурсов
         function sellResource(type) {
             const prices = { gold: 10, diamond: 25, silver: 7, emerald: 35, coal: 4 };
-            if (resources[type] > 0) {
-                resources.coins += prices[type];
-                resources[type] -= 1;
+            const amount = resources[type];
+            if (amount > 0) {
+                resources.coins += prices[type] * amount;
+                resources[type] = 0;
                 updateResources();
                 saveGame();
             } else {
                 alert(`У вас нет ${type} для продажи!`);
             }
         }
-
+    
         // Начисление ресурсов от генераторов
         setInterval(() => {
             generators.forEach(generator => {
@@ -345,12 +389,38 @@
             });
             saveGame();
         }, 1000); // Каждую секунду
-
+    
         // Сохранение состояния игры
         function saveGame() {
             localStorage.setItem('resources', JSON.stringify(resources));
             localStorage.setItem('generators', JSON.stringify(generators));
         }
+    
+        // Ставки
+        function placeBet() {
+            const betAmount = parseInt(document.getElementById('bet-amount').value);
+            if (isNaN(betAmount) || betAmount <= 0) {
+                alert('Пожалуйста, введите правильную сумму ставки.');
+                return;
+            }
+            if (resources.coins < betAmount) {
+                alert('Недостаточно монет для ставки.');
+                return;
+            }
+    
+            // Рандомный множитель: -5х, -4х, -3х, -2х, -1х, 1х, 2х, 3х, 4х, 5х
+            const multipliers = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5];
+            const multiplier = multipliers[Math.floor(Math.random() * multipliers.length)];
+            const result = betAmount * multiplier;
+            resources.coins += result;
+            if (resources.coins < 0) resources.coins = 0;  // Не допускаем отрицательный баланс
+    
+            updateResources();
+            saveGame();
+    
+            const resultText = result >= 0 ? `Вы выиграли ${result} монет!` : `Вы проиграли ${Math.abs(result)} монет.`;
+            document.getElementById('bet-result').textContent = resultText;
+        }
     </script>
 </body>
-</html>
+</html>    
