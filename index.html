@@ -268,159 +268,156 @@
 
     <script>
         const grid = document.getElementById('grid');
-        const resources = JSON.parse(localStorage.getItem('resources')) || { coins: 500, gold: 0, diamond: 0, silver: 0, emerald: 0, coal: 0 };
-        let selectedCell = null;
-        let generators = JSON.parse(localStorage.getItem('generators')) || [];
-    
-        // Отображаем ресурсы
-        function updateResources() {
-            document.getElementById('coins').textContent = resources.coins;
-            document.getElementById('gold').textContent = resources.gold;
-            document.getElementById('diamond').textContent = resources.diamond;
-            document.getElementById('silver').textContent = resources.silver;
-            document.getElementById('emerald').textContent = resources.emerald;
-            document.getElementById('coal').textContent = resources.coal;
-        }
-    
-        // Создаем сетку
-        function createGrid() {
-            grid.innerHTML = '';
-            for (let i = 0; i < 12; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                cell.addEventListener('click', () => openPopup(cell));
-                grid.appendChild(cell);
-            }
-        }
-    
-        // Вызов функции создания сетки при загрузке и изменении размера окна
-        window.addEventListener('load', () => {
-            createGrid();
-            restoreGenerators();
-            updateResources();
-        });
-        window.addEventListener('resize', createGrid);
-    
-        // Восстановление генераторов после перезагрузки
-        function restoreGenerators() {
-            generators.forEach(generator => {
-                const cell = grid.children[generator.cellIndex];
-                if (cell) {
-                    const genDiv = document.createElement('div');
-                    genDiv.classList.add('generator', generator.type);
-                    cell.appendChild(genDiv);
-    
-                    // Установка времени жизни генератора
-                    setTimeout(() => {
-                        cell.innerHTML = '';  // Удаление генератора после 40 часов
-                        generators = generators.filter(g => g.cellIndex !== generator.cellIndex);
-                        saveGame();
-                    }, 40 * 60 * 60 * 1000);  // 40 часов в миллисекундах
-                }
-            });
-        }
-    
-        // Переключение вкладок
-        function showTab(tabId) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-        }
-    
-        // Открыть popup
-        function openPopup(cell) {
-            selectedCell = cell;
-            document.getElementById('popup').style.display = 'block';
-        }
-    
-        // Закрыть popup
-        function closePopup() {
-            document.getElementById('popup').style.display = 'none';
-        }
-    
-        // Подтверждение покупки
-        function confirmPurchase(type) {
-            const prices = { gold: 800, diamond: 2100, silver: 500, emerald: 3200, coal: 200 };
-            if (resources.coins >= prices[type]) {
-                resources.coins -= prices[type];
-                document.getElementById('coins').textContent = resources.coins;
-                placeGenerator(type);
-                closePopup();
+const resources = JSON.parse(localStorage.getItem('resources')) || { coins: 500, gold: 0, diamond: 0, silver: 0, emerald: 0, coal: 0 };
+let selectedCell = null;
+let generators = JSON.parse(localStorage.getItem('generators')) || [];
+
+// Отображаем ресурсы
+function updateResources() {
+    document.getElementById('coins').textContent = resources.coins;
+    document.getElementById('gold').textContent = resources.gold;
+    document.getElementById('diamond').textContent = resources.diamond;
+    document.getElementById('silver').textContent = resources.silver;
+    document.getElementById('emerald').textContent = resources.emerald;
+    document.getElementById('coal').textContent = resources.coal;
+}
+
+// Создаем сетку
+function createGrid() {
+    grid.innerHTML = '';
+    for (let i = 0; i < 12; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.addEventListener('click', () => openPopup(cell));
+        grid.appendChild(cell);
+    }
+}
+
+// Вызов функции создания сетки при загрузке и изменении размера окна
+window.addEventListener('load', () => {
+    createGrid();
+    restoreGenerators();
+    updateResources();
+});
+window.addEventListener('resize', createGrid);
+
+// Восстановление генераторов после перезагрузки
+function restoreGenerators() {
+    generators.forEach(generator => {
+        const cell = grid.children[generator.cellIndex];
+        if (cell) {
+            const genDiv = document.createElement('div');
+            genDiv.classList.add('generator', generator.type);
+            cell.appendChild(genDiv);
+
+            // Установка времени жизни генератора
+            setTimeout(() => {
+                cell.innerHTML = '';  // Удаление генератора после 40 часов
+                generators = generators.filter(g => g.cellIndex !== generator.cellIndex);
                 saveGame();
-            } else {
-                alert('Недостаточно монет для покупки этого генератора!');
-            }
+            }, 40 * 60 * 60 * 1000);  // 40 часов в миллисекундах
         }
-    
-        // Установить генератор
-        function placeGenerator(type) {
-            if (selectedCell) {
-                if (selectedCell.querySelector('.generator')) {
-                    alert('Вы можете добавить только один генератор в ячейку!');
-                } else {
-                    selectedCell.innerHTML = '';  // Очистить содержимое ячейки перед добавлением нового генератора
-                    const generator = document.createElement('div');
-                    generator.classList.add('generator', type);
-                    selectedCell.appendChild(generator);
-                    generators.push({ type, cellIndex: Array.from(grid.children).indexOf(selectedCell), creationTime: Date.now() });
-                    saveGame();
-                }
-            }
-        }
-    
-        // Продажа ресурсов
-        function sellResource(type) {
-            const prices = { gold: 10, diamond: 25, silver: 7, emerald: 35, coal: 4 };
-            const amount = resources[type];
-            if (amount > 0) {
-                resources.coins += prices[type] * amount;
-                resources[type] = 0;
-                updateResources();
-                saveGame();
-            } else {
-                alert(`У вас нет ${type} для продажи!`);
-            }
-        }
-    
-        // Начисление ресурсов от генераторов
-        setInterval(() => {
-            generators.forEach(generator => {
-                resources[generator.type] += 1;
-                document.getElementById(generator.type).textContent = resources[generator.type];
-            });
-            saveGame();
-        }, 1000); // Каждую секунду
-    
-        // Сохранение состояния игры
-        function saveGame() {
-            localStorage.setItem('resources', JSON.stringify(resources));
-            localStorage.setItem('generators', JSON.stringify(generators));
-        }
-    
-        // Ставки
-        function placeBet() {
-            const betAmount = parseInt(document.getElementById('bet-amount').value);
-            if (isNaN(betAmount) || betAmount <= 0) {
-                alert('Пожалуйста, введите правильную сумму ставки.');
-                return;
-            }
-            if (resources.coins < betAmount) {
-                alert('Недостаточно монет для ставки.');
-                return;
-            }
-    
-            // Рандомный множитель: -5х, -4х, -3х, -2х, -1х, 1х, 2х, 3х, 4х, 5х
-            const multipliers = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5];
-            const multiplier = multipliers[Math.floor(Math.random() * multipliers.length)];
-            const result = betAmount * multiplier;
-            resources.coins += result;
-            if (resources.coins < 0) resources.coins = 0;  // Не допускаем отрицательный баланс
-    
-            updateResources();
-            saveGame();
-    
-            const resultText = result >= 0 ? `Вы выиграли ${result} монет!` : `Вы проиграли ${Math.abs(result)} монет.`;
-            document.getElementById('bet-result').textContent = resultText;
-        }
+    });
+}
+
+// Переключение вкладок
+function showTab(tabId) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+}
+
+// Открыть popup
+function openPopup(cell) {
+    selectedCell = cell;
+    document.getElementById('popup').style.display = 'block';
+}
+
+// Закрыть popup
+function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+}
+
+// Подтверждение покупки
+function confirmPurchase(type) {
+    const prices = { gold: 800, diamond: 2100, silver: 500, emerald: 3200, coal: 200 };
+    if (resources.coins >= prices[type]) {
+        resources.coins -= prices[type];
+        document.getElementById('coins').textContent = resources.coins;
+        placeGenerator(type);
+        closePopup();
+        saveGame();
+    } else {
+        alert('Недостаточно монет для покупки этого генератора!');
+    }
+}
+
+// Установить генератор
+function placeGenerator(type) {
+    if (selectedCell) {
+        const generator = document.createElement('div');
+        generator.classList.add('generator', type);
+        selectedCell.appendChild(generator);
+        generators.push({ type, cellIndex: Array.from(grid.children).indexOf(selectedCell), creationTime: Date.now() });
+        saveGame();
+    }
+}
+
+// Продажа ресурсов
+function sellResource(type) {
+    const prices = { gold: 10, diamond: 25, silver: 7, emerald: 35, coal: 4 };
+    const amount = resources[type];
+    if (amount > 0) {
+        resources.coins += prices[type] * amount;
+        resources[type] = 0;
+        updateResources();
+        saveGame();
+    } else {
+        alert(`У вас нет ${type} для продажи!`);
+    }
+}
+
+// Начисление ресурсов от генераторов
+setInterval(() => {
+    generators.forEach(generator => {
+        resources[generator.type] += 1;
+        document.getElementById(generator.type).textContent = resources[generator.type];
+    });
+    saveGame();
+}, 1000); // Каждую секунду
+
+// Сохранение состояния игры
+function saveGame() {
+    localStorage.setItem('resources', JSON.stringify(resources));
+    localStorage.setItem('generators', JSON.stringify(generators));
+}
+
+// Ставки
+function placeBet() {
+    const betAmount = parseInt(document.getElementById('bet-amount').value);
+    if (isNaN(betAmount) || betAmount <= 0) {
+        alert('Пожалуйста, введите правильную сумму ставки.');
+        return;
+    }
+    if (resources.coins < betAmount) {
+        alert('Недостаточно монет для ставки.');
+        return;
+    }
+
+    // Рандомный множитель: -5х, -4х, -3х, -2х, -1х, 1х, 2х, 3х, 4х, 5х
+    const multipliers = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5];
+    const multiplier = multipliers[Math.floor(Math.random() * multipliers.length)];
+    const result = betAmount * multiplier;
+    resources.coins += result;
+    if (resources.coins < 0) resources.coins = 0;  // Не допускаем отрицательный баланс
+
+    updateResources();
+    saveGame();
+
+    const resultText = result >= 0 ? `Вы выиграли ${result} монет!` : `Вы проиграли ${Math.abs(result)} монет.`;
+    document.getElementById('bet-result').textContent = resultText;
+}
+</script>
+
     </script>
 </body>
 </html>    
